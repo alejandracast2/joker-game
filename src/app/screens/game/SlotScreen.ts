@@ -1,7 +1,6 @@
 import { FancyButton } from "@pixi/ui";
 import { animate } from "motion";
 import type { ObjectTarget } from "motion/react";
-import type { Ticker } from "pixi.js";
 import { Container, Graphics } from "pixi.js";
 
 import { engine } from "../../getEngine";
@@ -131,15 +130,14 @@ export class SlotScreen extends Container {
     this.reposition();
   }
 
-  public update(ticker: Ticker) {
+  public update() {
     if (this.autoplay && this.stateMachine.current === "idle") {
       void this.handleSpin();
     }
 
     if (this.stateMachine.current === "counting") {
-      const delta = ticker.deltaMS / 1000;
       this.winLabel.scale.set(1 + Math.sin(performance.now() / 200) * 0.05);
-      this.winLabel.rotation = Math.sin(performance.now() / 150) * 0.04 * delta;
+      this.winLabel.rotation = Math.sin(performance.now() / 150) * 0.04;
     } else {
       this.winLabel.scale.set(1);
       this.winLabel.rotation = 0;
