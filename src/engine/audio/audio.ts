@@ -54,6 +54,14 @@ export class BGM {
     this.volume = v;
     if (this.current) this.current.volume = this.volume;
   }
+
+  /** Stop currently playing music immediately */
+  public stop() {
+    if (!this.current) return;
+    this.current.stop();
+    this.current = undefined;
+    this.currentAlias = undefined;
+  }
 }
 
 /**
