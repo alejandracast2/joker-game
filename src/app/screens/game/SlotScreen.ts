@@ -1,7 +1,8 @@
 import { FancyButton } from "@pixi/ui";
 import { animate } from "motion";
 import type { ObjectTarget } from "motion/react";
-import { Container, Graphics } from "pixi.js";
+import type { Spritesheet } from "pixi.js";
+import { Assets, Container, Sprite, Texture, Graphics } from "pixi.js";
 
 import { engine } from "../../getEngine";
 import { Button } from "../../ui/Button";
@@ -31,6 +32,7 @@ export class SlotScreen extends Container {
 
   private readonly mainContainer: Container;
   private readonly hudContainer: Container;
+  private background: Sprite;
   private readonly reelManager: ReelManager;
   private readonly resultEvaluator: ResultEvaluator;
   private readonly stateMachine: SlotStateMachine;
@@ -60,6 +62,18 @@ export class SlotScreen extends Container {
     this.drawHudBackground(400, 160);
     this.hudBackground.pivot.set(200, 80);
     this.hudBackground.eventMode = "none";
+
+    const spritesheet =
+      (Assets.get("data-0.json") as Spritesheet | undefined) ??
+      (Assets.get("main/images/data-0.json") as Spritesheet | undefined);
+    const backgroundTexture =
+      spritesheet?.textures?.["background.jpg"] ??
+      Texture.from("background.jpg");
+      
+    this.background = new Sprite(backgroundTexture);
+    this.background.anchor.set(0.5);
+    this.addChildAt(this.background, 0);
+
 
     this.resultEvaluator = new ResultEvaluator(SLOT_PAYTABLE);
     this.stateMachine = new SlotStateMachine();
@@ -156,6 +170,20 @@ export class SlotScreen extends Container {
     this.mainContainer.position.set(width * 0.5, height * 0.45);
     const { width: reelWidth, height: reelHeight } = this.reelManager.getSize();
     this.reelManager.position.set(-reelWidth / 2, -reelHeight / 2);
+
+    const centerX = width * 0.5;
+    const centerY = height * 0.5;
+    const textureWidth = this.background.texture.width;
+    const textureHeight = this.background.texture.height;
+    const backgroundScale = Math.max(
+      width / textureWidth,
+      height / textureHeight,
+    );
+
+    this.background.x = centerX;
+    this.background.y = centerY;
+    this.background.scale.set(backgroundScale);
+
 
     this.hudContainer.position.set(width * 0.5, height - 200);
     const hudWidth = Math.min(width * 0.9, 700);
