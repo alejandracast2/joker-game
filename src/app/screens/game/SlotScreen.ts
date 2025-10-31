@@ -2,7 +2,7 @@ import { FancyButton } from "@pixi/ui";
 import { animate } from "motion";
 import type { ObjectTarget } from "motion/react";
 import type { Spritesheet } from "pixi.js";
-import { Assets, Container, Sprite, Texture, Graphics } from "pixi.js";
+import { Assets, Container, Sprite, Texture, Graphics, AnimatedSprite } from "pixi.js";
 
 import { engine } from "../../getEngine";
 import { Button } from "../../ui/Button";
@@ -33,6 +33,10 @@ export class SlotScreen extends Container {
   private readonly mainContainer: Container;
   private readonly hudContainer: Container;
   private background: Sprite;
+  private overlay?: Sprite;
+  private overlayOffset = { x: 0, y: 0 };   // offset en coords del fondo
+  private overlayTarget = { w: 0, h: 0 };   // tamaño de la franja (coords fondo)
+  private overlayMask?: Graphics;
   private readonly reelManager: ReelManager;
   private readonly resultEvaluator: ResultEvaluator;
   private readonly stateMachine: SlotStateMachine;
@@ -69,11 +73,39 @@ export class SlotScreen extends Container {
     const backgroundTexture =
       spritesheet?.textures?.["background.jpg"] ??
       Texture.from("background.jpg");
-      
+
     this.background = new Sprite(backgroundTexture);
     this.background.anchor.set(0.5);
     this.addChildAt(this.background, 0);
 
+    const region = { x: 190, y: 10, w: 1403, h: 297 };
+
+    // Tamaño original de la textura del fondo:
+    const bgW = this.background.texture.width;
+    const bgH = this.background.texture.height;
+
+    // Offset del centro de la franja respecto al centro del fondo:
+    this.overlayOffset = {
+      x: (region.x + region.w / 2) - (bgW / 2),
+      y: (region.y + region.h / 2) - (bgH / 2),
+    };
+
+    // Guarda el tamaño objetivo de la franja:
+    this.overlayTarget = { w: region.w, h: region.h };
+
+    const overlayAnimation =
+      spritesheet?.animations?.["baece685-156b-4425-8980-7af279ac9c1d"]
+
+    if (!overlayAnimation) {
+      throw new Error(`No existe la animación "baece685-156b-4425-8980-7af279ac9c1d" en sheet.animations`);
+    }
+    const animatedOverlay = new AnimatedSprite(overlayAnimation);
+    animatedOverlay.anchor.set(0.5);
+    animatedOverlay.blendMode = "add";
+    animatedOverlay.animationSpeed = 0.1;
+    animatedOverlay.play();
+    this.overlay = animatedOverlay;
+    this.addChild(animatedOverlay);
 
     this.resultEvaluator = new ResultEvaluator(SLOT_PAYTABLE);
     this.stateMachine = new SlotStateMachine();
@@ -171,19 +203,51 @@ export class SlotScreen extends Container {
     const { width: reelWidth, height: reelHeight } = this.reelManager.getSize();
     this.reelManager.position.set(-reelWidth / 2, -reelHeight / 2);
 
-    const centerX = width * 0.5;
-    const centerY = height * 0.5;
-    const textureWidth = this.background.texture.width;
-    const textureHeight = this.background.texture.height;
-    const backgroundScale = Math.max(
-      width / textureWidth,
-      height / textureHeight,
+    
+  const centerX = width * 0.5;
+  const centerY = height * 0.5;
+
+  const texW = this.background.texture.width;
+  const texH = this.background.texture.height;
+
+  // Escala del fondo (tu lógica)
+  const backgroundScale = Math.min(width / texW, height / texH);
+
+  // Posición/escala del fondo
+  this.background.position.set(centerX, centerY);
+  this.background.scale.set(backgroundScale);
+
+  // 👉 Overlay colocado en la franja
+  if (this.overlay) {
+    // 1) Posición: centro de pantalla + offset (en coords del fondo) * escala del fondo
+    const ox = centerX + this.overlayOffset.x * backgroundScale;
+    const oy = centerY + this.overlayOffset.y * backgroundScale;
+    this.overlay.position.set(ox, oy);
+
+    // 2) Escala: ajusta la animación para "llenar" la franja (cover)
+    const frame0 = (this.overlay as AnimatedSprite).textures[0];
+    const sFit = Math.max(
+      this.overlayTarget.w / frame0.width,
+      this.overlayTarget.h / frame0.height
     );
+    this.overlay.scale.set(backgroundScale * sFit);
 
-    this.background.x = centerX;
-    this.background.y = centerY;
-    this.background.scale.set(backgroundScale);
+    // 3) Máscara para recortar exactamente al rectángulo de la franja
+    if (!this.overlayMask) {
+      this.overlayMask = new Graphics();
+      this.addChild(this.overlayMask);
+      this.overlay.mask = this.overlayMask;
+    }
 
+    const rw = this.overlayTarget.w * backgroundScale; // ancho en pantalla
+    const rh = this.overlayTarget.h * backgroundScale; // alto en pantalla
+    const radius = 16 * backgroundScale;               // ajusta si tu borde es redondeado
+
+    this.overlayMask
+      .clear()
+      .roundRect(ox - rw / 2, oy - rh / 2, rw, rh, radius)
+      .fill(0xffffff);
+  }
 
     this.hudContainer.position.set(width * 0.5, height - 200);
     const hudWidth = Math.min(width * 0.9, 700);
