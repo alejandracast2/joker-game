@@ -67,20 +67,21 @@ export class ReelContainer extends Container {
     // === AQUÍ VA EL REEMPLAZO DEL BLOQUE DE COLUMNAS POR REELS ===
 
     // Dimensiones por columna (mantenemos tus números para compatibilidad)
-    const REEL_WIDTH = 280;       // ancho de cada columna
-    const VIEW_HEIGHT = 533;      // alto visible del área de símbolos por columna
+    const VIEW_WIDTH= 1435;       // ancho de cada columna
+    const VIEW_HEIGHT = 540;      // alto visible del área de símbolos por columna
     // Tamaño de cada símbolo según filas visibles
     const SYMBOL_SIZE = Math.floor(VIEW_HEIGHT / this.ROWS); // ~177 si ROWS=3
-
+    const REEL_WIDTH = Math.floor(VIEW_WIDTH / this.COLS); ;
+    console.log("simbol",SYMBOL_SIZE)
     // Coloca el reelContainer alineado con tu cálculo anterior
     // (equivale a: (-this.reel.width/2)+20 para la primera columna, y -this.reel.height/2 para Y)
-    this.reelContainer.x = (-this.reel.width / 2) +40;
-    this.reelContainer.y = -this.reel.height / 2+50;
+    this.reelContainer.x = (-this.reel.width / 2);
+    this.reelContainer.y = -this.reel.height / 2;
 
     // Prepara tus texturas de símbolos (pon aquí tus archivos reales)
     // Por ejemplo:
     // const slotTextures = ["cherry.png","lemon.png","bar.png","seven.png","bell.png"].map(Texture.from);
-    const slotTextures = ["name.png"].map(Texture.from); // placeholder
+    const slotTextures = ["perla-0.png","gema-0.png","zapatos-0.png","diamante-0.png","bolos-0.png","guitar-0.png","joker-0.png","bonus-0.png"].map(Texture.from); // placeholder
 
     // Crea los reels (columnas)
     for (let i = 0; i < this.COLS; i++) {
@@ -96,8 +97,8 @@ export class ReelContainer extends Container {
         blur: new BlurFilter(),
       };
 
-      reel.blur.blurX = 0;
-      reel.blur.blurY = 0;
+      reel.blur.strengthX = 0;
+      reel.blur.strengthY = 0;
       rc.filters = [reel.blur];
 
       // Construye los símbolos de este reel
@@ -105,13 +106,12 @@ export class ReelContainer extends Container {
         const tex = slotTextures[Math.floor(Math.random() * slotTextures.length)];
         const symbol = new Sprite(tex);
 
-        // Escala uniforme para encajar en SYMBOL_SIZE x SYMBOL_SIZE
-        symbol.scale.set(Math.min(SYMBOL_SIZE / symbol.width, SYMBOL_SIZE / symbol.height));
+        // Escalar imagen
+        symbol.scale.set(1);
 
         // Posición: centrado horizontalmente dentro del REEL_WIDTH, y apilado verticalmente
         symbol.x = Math.round((REEL_WIDTH - symbol.width) / 2);
-        symbol.y = j * SYMBOL_SIZE;
-
+        symbol.y =(SYMBOL_SIZE/2) -(symbol.height/2) +j*SYMBOL_SIZE;
         rc.addChild(symbol);
         reel.symbols.push(symbol);
       }
