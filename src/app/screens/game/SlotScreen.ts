@@ -3,6 +3,7 @@ import { Assets, Container, Sprite, Texture } from "pixi.js";
 
 import { OverlayContainer } from "../../slot/info/OverlayContainer";
 import { ReelContainer } from "../../slot/reels/ReelContainer";
+import { DownContainer } from "../../slot/info/DownContainer";
 
 export class SlotScreen extends Container {
   public static assetBundles = ["preload", "main"];
@@ -16,6 +17,8 @@ export class SlotScreen extends Container {
   // Subcontainers (hijos de mainContainer)
   private readonly overlaycontainer: OverlayContainer;
   private readonly reelcontainer: ReelContainer;
+  private readonly downcontainer: DownContainer;
+  
 
   constructor() {
     super();
@@ -50,6 +53,9 @@ export class SlotScreen extends Container {
 
     this.reelcontainer = new ReelContainer(bgW, bgH);
     this.mainContainer.addChild(this.reelcontainer);
+    
+    this.downcontainer = new DownContainer(bgW, bgH);
+    this.mainContainer.addChild(this.downcontainer);
   }
 
   public resize(width: number, height: number) {
@@ -79,10 +85,12 @@ export class SlotScreen extends Container {
     // para que usen (0,0) como centro local.
     this.overlaycontainer.position.set(0, 0);
     this.reelcontainer.position.set(0, 0);
+    this.downcontainer.position.set(0,0);
 
     // Si sus métodos resize usan el centro para posicionarse,
     // ahora pásales 0,0 (centro local), junto con la escala global aplicada.
-    this.overlaycontainer.resize(scaleToFit, 0, 0);
-    this.reelcontainer.resize(scaleToFit, 0, 0, width, height);
+    this.overlaycontainer.resize();
+    this.reelcontainer.resize();
+    this.downcontainer.resize()
   }
 }
